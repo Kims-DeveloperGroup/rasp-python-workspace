@@ -10,9 +10,10 @@ from picamera2.encoders import H264Encoder
 picam2 = Picamera2()
 #video_config = picam2.create_video_configuration()
 capture_config = picam2.create_still_configuration()
-picam2.configure(picam2.create_preview_configuration({"size": (1024, 768)}))
+picam2.configure(picam2.create_preview_configuration({"size": (640, 480)}))
+#picam2.start_preview(Preview.QTGL)
+
 picam2.configure(capture_config)# Without the config, Unsupported foramt error is thrown at fgbg.apply()
-picam2.start_preview(Preview.QTGL)
 picam2.start()
 
 # Remove Background
@@ -26,12 +27,14 @@ while True:
     frame_nobg = fgbg.apply(frame)
     cv2.imshow('frame_origin', frame)
     cv2.imshow('frame', frame_nobg)
+    
+    # Exit condition: 'q' pressed 
     key = cv2.waitKey(1)
     print(key)
     if key == ord('q'):
         break
 picam2.stop()
-picam2.stop_preview()
+#picam2.stop_preview)
 ##out.release()
 
 print('Processing frames')
