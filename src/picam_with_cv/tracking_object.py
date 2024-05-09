@@ -1,6 +1,8 @@
 from pprint import pprint
 import cv2
 from picamera2 import Picamera2, Preview
+from picamera2.encoders import H264Encoder
+import time
 
 # Configure trackers
 trackers = [cv2.legacy.TrackerBoosting_create,
@@ -13,19 +15,30 @@ trackers = [cv2.legacy.TrackerBoosting_create,
             cv2.legacy.TrackerMOSSE_create]
 trackerIdx = 0
 tracker = None
+tracker2 = None
 isFirst = True
 delay=1
 win_name = 'Tracking APIs'
 
-# Configure Picamera2
-picam2 = Picamera2()
-capture_config = picam2.create_still_configuration()
-picam2.configure(capture_config)# Without the config, Unsupported foramt error is thrown at fgbg.apply()
-picam2.start()
+# Configure Picamera2 and record a video
+#with Picamera2() as cam:
+#    video_config = cam.create_video_configuration()
+#    cam.configure(video_config)
+ #   encoder = H264Encoder(bitrate=10000000)
+  #  output = '/home/rica/Documents/ret/ret.h264'
+  #  cam.start_preview(Preview.QT)
+  #  cam.start_recording(encoder, output)
+  #  time.sleep(20)
+  #  cam.stop_preview()
+  #  cam.stop_recording()
+
+# Read the video file
+video = cv2.VideoCapture('/home/rica/Documents/ret/ret.h264')
+
 
 print('Processing frames')
-while True:
-    frame = picam2.capture_array()
+while video.isOpened():
+    ret, frame = video.read()
     img_draw = frame.copy()
     if tracker is None: # ROI is unset initial step
         cv2.putText(img_draw, "Press the Space to set ROI!!", \
@@ -33,6 +46,13 @@ while True:
     else: # in case of tracker set
         ok, bbox = tracker.update(frame)   # Update bbox
         (x,y,w,h) = bbox
+
+        if tracker2 != None:
+            ok2, bbox2 = tracker2.update(frame)
+            (x2,y2,w2,h2) = bbox2
+            if ok2:
+                cv2.rectangle(img_draw, (int(x2), int(y2)), (int(x2 + w2), int(y2 + h2)), \
+                        (0,255,0), 2, 1)
         if ok: # Draw a newly updated bounding box with rect
             cv2.rectangle(img_draw, (int(x), int(y)), (int(x + w), int(y + h)), \
                           (0,255,0), 2, 1)
@@ -50,7 +70,7 @@ while True:
     cv2.imshow(win_name, img_draw)
     key = cv2.waitKey(delay) & 0xff
     # Wait key input and configure tracker
-    if key == ord(' ') or isFirst: #Select ROI and set default tracker
+    if key == ord(' '): #Select ROI and set default tracker
         isFirst = False
         roi = cv2.selectROI(win_name, frame, False)  # Drag an area of ROI
         print('Select ROI')
@@ -58,6 +78,12 @@ while True:
             tracker = trackers[trackerIdx]()
             isInit = tracker.init(frame, roi)
             print('tracker is initalized')
+    elif key == ord('a'): #Add another tracker
+        roi2 = cv2.selectROI(win_name, frame, False)
+        print('Select another ROI')
+        if roi2[2] and roi2[3]:
+            tracker2 = trackers[trackerIdx]()
+            tracker2.init(frame, roi2)
     elif key in range(48, 55): #key (0~6) change tracker and init with the existing bounding box
         trackerIdx = key-48 
         if bbox is not None:
