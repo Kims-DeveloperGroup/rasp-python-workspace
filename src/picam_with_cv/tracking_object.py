@@ -8,7 +8,7 @@ trackers = [cv2.legacy.TrackerBoosting_create,
             cv2.legacy.TrackerKCF_create,
             cv2.legacy.TrackerTLD_create,
             cv2.legacy.TrackerMedianFlow_create,
-            #cv2.legacy.TrackerGOTURN_create, #Possibly deprecated
+            #cv2.legacy.TrackerGOTURN_create, #goturn.caffemodel, goturnportxt are required
             cv2.legacy.TrackerCSRT_create,
             cv2.legacy.TrackerMOSSE_create]
 trackerIdx = 0
@@ -36,10 +36,13 @@ while True:
         if ok: # Draw a newly updated bounding box with rect
             cv2.rectangle(img_draw, (int(x), int(y)), (int(x + w), int(y + h)), \
                           (0,255,0), 2, 1)
-            print('tracking')
+            print('tracking....')
         else : # On a tracking fail
             cv2.putText(img_draw, "Tracking fail.", (100,80), \
                         cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2,cv2.LINE_AA)
+            tracker = None
+            bbox = None
+            isFirst = True
     trackerName = tracker.__class__.__name__
     cv2.putText(img_draw, str(trackerIdx) + ":"+trackerName , (100,20), \
                  cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0,255,0),2,cv2.LINE_AA)
