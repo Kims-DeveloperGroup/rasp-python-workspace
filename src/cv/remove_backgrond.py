@@ -1,28 +1,22 @@
-import cv2
-import cvzone
-from cvzone.SelfiSegmentationModule import SelfiSegmentation
+# BackgroundSubtractorMOG로 배경 제거 (track_bgsub_mog.py)
 
-segmentor = SelfiSegmentation()
-
-# open camera 
-cap = cv2.VideoCapture(1)
-
-while True:
-    # read image
-    ret, img = cap.read()
-
-    #resize office to 640×480
-    img = cv2.resize(img, (320, 240))
-    green = (0, 255, 0)
-    imgNoBg = segmentor.removeBG(img, green, threshold=0.50)
-
-    # show both images
-    cv2.imshow('office',img)
-    cv2.imshow('office no bg',imgNoBg)
-
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+import numpy as np, cv2
+src = 'path'
+scr = 0
+cap = cv2.VideoCapture(0)
+fps = cap.get(cv2.CAP_PROP_FPS) # 프레임 수 구하기
+delay = int(1000/fps)
+# 배경 제거 객체 생성 --- ①
+fgbg = cv2.bgsegm.createBackgroundSubtractorMOG()
+while cap.isOpened():
+    ret, frame = cap.read()
+    if not ret:
         break
-
-# close camera
+    # 배경 제거 마스크 계산 --- ②
+    fgmask = fgbg.apply(frame)
+    cv2.imshow('frame',frame)
+    cv2.imshow('bgsub',fgmask)
+    if cv2.waitKey(1) & 0xff == 27:
+        break
 cap.release()
 cv2.destroyAllWindows()
