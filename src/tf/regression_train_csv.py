@@ -18,6 +18,8 @@ print(features)
 print(labels)
 
 # Preprocessing dataset
+features = np.array(features)
+print(f'features={features}')
 normalizer = layers.Normalization()
 normalizer.adapt(features)
 
@@ -29,6 +31,7 @@ model = tf.keras.Sequential([
 ])
 
 model.compile(loss = tf.keras.losses.MeanSquaredError(),
-                      optimizer = tf.keras.optimizers.legacy.Adam())
+                      optimizer = tf.keras.optimizers.Adam())
 # Train model
 model.fit(features, labels, epochs=10)
+model.save('tf/models/test_v1.keras')
