@@ -32,6 +32,7 @@ csv_data = []
 
 # Capture frames
 video = cv2.VideoCapture(0)
+started = False
 while video.isOpened():
 	ret, frame = video.read()
 	if not ret:
@@ -43,7 +44,7 @@ while video.isOpened():
 	# Process the frame with MediaPipe Pose
 	result = pose.process(frame_rgb)
 	# Draw the pose landmarks on the frame
-	if result.pose_landmarks:
+	if result.pose_landmarks and started == True:
 	    mp_drawing.draw_landmarks(frame_rgb, result.pose_landmarks, mp_pose.POSE_CONNECTIONS)
 	    write_landmarks_to_csv(result.pose_landmarks.landmark, csv_data, frame_number, writer)
     # Display the frame
@@ -51,7 +52,7 @@ while video.isOpened():
 	key = cv2.waitKey(1) & 0xff
 	if key == 27:
 		break
-	elif key == ord(' '): #Write data with label
+	elif key == ord(' ') and started == True: #Write data with label
 		label = cv2.waitKey(-1) - 48
 		for row in csv_data:
 			row.append(label)
@@ -59,6 +60,11 @@ while video.isOpened():
 		# reset data
 		csv_data = []
 		frame_number = -1
+	elif key == ord(' '):
+		started = True
+		csv_data = []
+	elif started == False :
+		print('Wait')
 
 # Release open resources
 file.close()
