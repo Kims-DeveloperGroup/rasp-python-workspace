@@ -6,14 +6,14 @@ import numpy as np
 import mediapipe as mp
 import csv
 
-def write_landmarks_to_csv(landmarks, csv_data, frame_number, writer):
+def write_landmarks_to_csv(landmarks, csv_data, frame_number):
     print(f"Landmark coordinates for frame {frame_number}:")
     for idx, landmark in enumerate(landmarks):
         print(f"{mp_pose.PoseLandmark(idx).name}: (x: {landmark.x}, y: {landmark.y}, z: {landmark.z})")
         csv_data.append([frame_number, idx, landmark.x, landmark.y, landmark.z])
     print("\n")
 
-# init data.csv
+# Init data.csv and open the file writer
 data_file_path = '/Users/rica/Documents/data.csv' 
 file = open(data_file_path, 'w', newline='')
 csv.writer(file).writerow(['frame', 'pose', 'x', 'y', 'z', 'label'])
@@ -33,38 +33,47 @@ csv_data = []
 # Capture frames
 video = cv2.VideoCapture(0)
 started = False
+reset = False
+frame_rgb = None
 while video.isOpened():
+	# Read frmes from video
 	ret, frame = video.read()
 	if not ret:
 		break
-	# Convert the frame to RGB
-	frame_number+=1
+	if frame_rgb is not None:
+		cv2.imshow('MediaPipe Pose', frame_rgb)
 	frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 	
-	# Process the frame with MediaPipe Pose
-	result = pose.process(frame_rgb)
-	# Draw the pose landmarks on the frame
-	if result.pose_landmarks and started == True:
-	    mp_drawing.draw_landmarks(frame_rgb, result.pose_landmarks, mp_pose.POSE_CONNECTIONS)
-	    write_landmarks_to_csv(result.pose_landmarks.landmark, csv_data, frame_number, writer)
-    # Display the frame
-	cv2.imshow('MediaPipe Pose', frame_rgb)
+	# Wait a key input
 	key = cv2.waitKey(1) & 0xff
+	
+	# Exit the loop
 	if key == 27:
 		break
-	elif key == ord(' ') and started == True: #Write data with label
-		label = cv2.waitKey(-1) - 48
-		for row in csv_data:
+	# Lable frames and write in a csv file
+	elif key == ord(' ') and started == True: 
+		print('Wait for labeling')
+		label = cv2.waitKey(-1) - 48 # Enter a label
+		for row in csv_data: # Label frames
 			row.append(label)
-		writer.writerows(csv_data)
-		# reset data
-		csv_data = []
-		frame_number = -1
-	elif key == ord(' '):
+		writer.writerows(csv_data) # Write a csv file
+		started = False # Stop
+	# Begin to read frames
+	elif key == ord(' ') and started == False:
 		started = True
+	# Reset data before begining
+	elif started == False and frame_number != 0:
+		print('Press space to begin')
 		csv_data = []
-	elif started == False :
-		print('Wait')
+		frame_number = 0
+	elif started == True:
+		# Process frames and write frame data
+		result = pose.process(frame_rgb)
+		if result.pose_landmarks:
+			mp_drawing.draw_landmarks(frame_rgb, result.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+			write_landmarks_to_csv(result.pose_landmarks.landmark, csv_data, frame_number)
+		# Increment frame number and convert color to RGB
+		frame_number+=1
 
 # Release open resources
 file.close()
