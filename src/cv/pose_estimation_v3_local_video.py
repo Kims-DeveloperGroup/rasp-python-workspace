@@ -13,6 +13,26 @@ def write_landmarks_to_csv(landmarks):
 	print("\n")
 	return csv_data
 
+def write_frames_to_file(src):
+	cap = cv.VideoCapture(0)
+	# Define the codec and create VideoWriter object
+	fourcc = cv.VideoWriter_fourcc(*'XVID')
+	out = cv.VideoWriter(src, fourcc, 20.0, (640, 480))
+	while cap.isOpened():
+		ret, frame = cap.read()
+		if not ret:
+			print("Can't receive frame (stream end?). Exiting ...")
+			break
+		# write the flipped frame
+		out.write(frame)
+		cv.imshow('frame', frame)
+		if cv.waitKey(1) == ord(' '):
+			break
+		# Release everything if job is finished
+		cap.release()
+		out.release()
+		cv.destroyAllWindows()
+
 # Init data.csv and open the file writer
 data_file_path = '/Users/rica/Documents/data_v3.csv' 
 file = open(data_file_path, 'w', newline='')
@@ -55,8 +75,11 @@ while video.isOpened():
 	elif key == ord(' '): 
 		print('Wait for labeling')
 		label = -1
-		while label > 10 or label < 0:
+		while (label > 10 or label < 0) and label != -16:
 			label = cv2.waitKey(-1) - 48 # Enter a label (0 ~ 9)
+		if label == -16:
+			print('Skip a frame')
+			continue
 		# Get csv data from a frame
 		result = pose.process(frame_rgb)
 		mp_drawing.draw_landmarks(frame_rgb, result.pose_landmarks, mp_pose.POSE_CONNECTIONS)
