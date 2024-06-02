@@ -69,6 +69,7 @@ while video.isOpened():
 		labelText = labels[label]
 		timer = time.time()
 	elif label != -1 and timer != 0 and (time.time() - timer) > 3:
+		cv2.putText(frame_rgb, "CAPTURE", (50,50), cv2.FONT_HERSHEY_SIMPLEX, 3.0, (255, 0, 0), 10)
 		# Get csv data from a frame
 		result = pose.process(frame_rgb)
 		if result.pose_landmarks is not None:

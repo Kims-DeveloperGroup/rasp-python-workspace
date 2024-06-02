@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses ataclass
 import cv2
 from cv2 import VideoCapture
 import matplotlib.pyplot as plt
