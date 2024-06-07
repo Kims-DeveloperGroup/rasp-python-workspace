@@ -25,7 +25,9 @@ def write_landmarks_to_csv(landmarks):
 		csv_data.append(landmark.z)
 	print("\n")
 	return csv_data
-
+timer = 0
+def getTime():
+	return time.time()
 # Init data.csv and open the file writer
 data_file_path = '/Users/rica/Documents/data_v3.csv' 
 file = open(data_file_path, 'w', newline='')
@@ -42,9 +44,9 @@ video_src = 0
 # Capture frames
 frame_rgb = None
 video = VideoCapture(video_src)
-print('START READING')
 label = -1
-timer = 0
+count = 0
+started = False
 # Key guide
 # Space: Stop a video for labeling
 while video.isOpened():
@@ -62,13 +64,25 @@ while video.isOpened():
 	# Exit the loop
 	if key == 27:
 		break
+	elif started == False and key != ord(' '):
+		cv2.putText(frame_rgb, 'READY', (300, 500), cv2.FONT_HERSHEY_SIMPLEX, 20.0, (255, 0, 0), 50)
+	elif started == False and key == ord(' '):
+		started = True
+		cv2.putText(frame_rgb, 'START', (300, 500), cv2.FONT_HERSHEY_SIMPLEX, 20.0, (255, 0, 0), 50)
+	elif count != 0 and count % 10 == 0 : # At dvery 10 dataset, decide to continue or not
+		cv2.putText(frame_rgb, 'CONTINUE OR NOT', (300, 500), cv2.FONT_HERSHEY_SIMPLEX, 20.0, (255, 0, 0), 50)
+		key = cv2.waitKey(-1) & 0xff
+		if key == 27:# Stop
+			break
+		else : # Continue
+			timer = 0
 	# Lable frames and write in a csv file
-	elif label == -1 and timer == 0: 
+	elif started == True and label == -1 and timer == 0: 
 		print('Wait for labeling')
 		label = random_label()
 		labelText = labels[label]
-		timer = time.time()
-	elif label != -1 and timer != 0 and (time.time() - timer) > 3:
+		timer = getTime()
+	elif label != -1 and timer != 0 and (getTime() - timer) > 3:
 		cv2.putText(frame_rgb, "CAPTURE", (50,50), cv2.FONT_HERSHEY_SIMPLEX, 3.0, (255, 0, 0), 10)
 		# Get csv data from a frame
 		result = pose.process(frame_rgb)
@@ -81,9 +95,11 @@ while video.isOpened():
 				writer.writerow(csv_data) # Write a csv file
 		label = -1
 		timer = 0
+		count+=1
 	else :
 		cv2.putText(frame_rgb, f"{time.time() - timer} sec", (50,50), cv2.FONT_HERSHEY_SIMPLEX, 2.0, (255, 0, 0), 2)
-		cv2.putText(frame_rgb, labelText, (300, 500), cv2.FONT_HERSHEY_SIMPLEX, 10.0, (255, 0, 0), 50)
+		cv2.putText(frame_rgb, labels[label], (300, 500), cv2.FONT_HERSHEY_SIMPLEX, 10.0, (255, 0, 0), 50)
+		cv2.putText(frame_rgb, f"count: {count}", (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 2.0, (255, 0, 0), 50)
 # Release open resources
 file.close()
 video.release()
