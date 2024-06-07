@@ -10,7 +10,7 @@ import time
 # 2: Front Hand Hook, 3: Back Hand Hook, 
 # 4: Front Hand Upper Cut, 5: Back Hand Upper Cut
 # 6: Front Hand Body Shot, 7: Back Hand Body Shot
-# 7: Body Jab 8: Body Straigh
+# 8: Body Jab 9: Body Straigh
 labels = ['Jab', 'Straight', 'F-Hook', 'B-Hook', 'F-Upper', 'B-Upper', 'F-Body', 'B-Body', 'Body Jab', 'Body Straight']
 
 # Initialize MediaPipe Pose and Drawing utilities
@@ -61,8 +61,11 @@ def run(testRun = False):
 	label = -1
 	timer = 0
 	count = 0
+	total_data_count = 0
 	started = False
-	capture_duration = 2 # Time unit:sec
+	capture_duration = 3 # Time unit:sec
+	durationBeforeStart = 70 # frame count
+	currDuration = 0
 	# Key guide
 	# Space: Stop a video for labeling
 	while video.isOpened():
@@ -82,12 +85,15 @@ def run(testRun = False):
 		# Exit the loop
 		if key == 27:
 			break
+		# Give standby time before starting
+		elif started == True and currDuration < durationBeforeStart:
+			currDuration+=1
+			cv2.putText(frame_rgb, f'{durationBeforeStart - currDuration}', (50, 500), font, 5.0, rgb, 10)
 		elif started == False and key != ord(' '):
 			cv2.putText(frame_rgb, 'READY', (50, 500), font, 15.0, rgb, 50)
 			count = 0
 		elif started == False and key == ord(' '):
 			started = True
-			time.sleep(5)
 		# At dvery 10 dataset, decide to continue or not
 		elif count > 0 and count % 10 == 0 and started == True : 
 			cv2.putText(frame_rgb, 'CONTINUE OR NOT', (50, 500), font, 5.0, rgb, 10)
@@ -108,6 +114,7 @@ def run(testRun = False):
 				csv_data = write_landmarks_to_csv(result.pose_landmarks.landmark, label)
 				#csv_data.append(label)
 				writer.writerow(csv_data) # Write a csv file
+				total_data_count+=1
 			label = -1
 			timer = 0
 			count+=1
@@ -121,5 +128,5 @@ def run(testRun = False):
 	
 	model_path = 'tf/models/boxing_pose_est_v1.keras'
 	if testRun == False:
-		t.train(data_file_path, model_path, 100)
+		t.train(data_file_path, model_path, total_data_count * 20)
 	t.test(data_file_path, model_path)	
