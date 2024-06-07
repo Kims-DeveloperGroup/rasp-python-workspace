@@ -15,7 +15,7 @@ import random
 def random_label():
 	return random.randint(0, 8)
 
-def write_landmarks_to_csv(landmarks):
+def write_landmarks_to_csv(landmarks, label):
 	csv_data = []
 	for idx, landmark in enumerate(landmarks):
 		print(f"{mp_pose.PoseLandmark(idx).name}: (x: {landmark.x}, y: {landmark.y}, z: {landmark.z})")
@@ -24,6 +24,7 @@ def write_landmarks_to_csv(landmarks):
 		csv_data.append(landmark.y)
 		csv_data.append(landmark.z)
 	print("\n")
+	csv_data.append(label)
 	return csv_data
 timer = 0
 def getTime():
@@ -37,9 +38,9 @@ writer = csv.writer(file)
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
 pose = mp_pose.Pose()
-
-#video_src = '/Users/rica/Documents/rasp-python-workspace/output.avi'
-#write_frames_to_file(video_src)
+#Text Config
+rgb = (255, 0, 0)
+font = cv2.FONT_HERSHEY_SIMPLEX
 video_src = 0
 # Capture frames
 frame_rgb = None
@@ -47,6 +48,7 @@ video = VideoCapture(video_src)
 label = -1
 count = 0
 started = False
+capture_duration = 2 # Time unit:sec
 # Key guide
 # Space: Stop a video for labeling
 while video.isOpened():
@@ -57,7 +59,9 @@ while video.isOpened():
 	if frame_rgb is not None:
 		cv2.imshow('MediaPipe Pose', frame_rgb)
 	frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-	
+	result = pose.process(frame_rgb)
+	mp_drawing.draw_landmarks(frame_rgb, result.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+
 	# Wait a key input
 	key = cv2.waitKey(1) & 0xff
 	
@@ -65,41 +69,38 @@ while video.isOpened():
 	if key == 27:
 		break
 	elif started == False and key != ord(' '):
-		cv2.putText(frame_rgb, 'READY', (300, 500), cv2.FONT_HERSHEY_SIMPLEX, 20.0, (255, 0, 0), 50)
+		cv2.putText(frame_rgb, 'READY', (50, 500), font, 15.0, rgb, 50)
 	elif started == False and key == ord(' '):
 		started = True
-		cv2.putText(frame_rgb, 'START', (300, 500), cv2.FONT_HERSHEY_SIMPLEX, 20.0, (255, 0, 0), 50)
+		cv2.putText(frame_rgb, 'START', (50, 500), font, 15.0, rgb, 50)
 	elif count != 0 and count % 10 == 0 : # At dvery 10 dataset, decide to continue or not
-		cv2.putText(frame_rgb, 'CONTINUE OR NOT', (300, 500), cv2.FONT_HERSHEY_SIMPLEX, 20.0, (255, 0, 0), 50)
-		key = cv2.waitKey(-1) & 0xff
+		cv2.putText(frame_rgb, 'CONTINUE \nOR NOT', (50, 500), font, 5.0, rgb, 10)
+		#key = cv2.waitKey(-1) & 0xff
 		if key == 27:# Stop
 			break
 		else : # Continue
 			timer = 0
 	# Lable frames and write in a csv file
 	elif started == True and label == -1 and timer == 0: 
-		print('Wait for labeling')
 		label = random_label()
 		labelText = labels[label]
+		print(f'label={label} value:{labelText}')
 		timer = getTime()
-	elif label != -1 and timer != 0 and (getTime() - timer) > 3:
-		cv2.putText(frame_rgb, "CAPTURE", (50,50), cv2.FONT_HERSHEY_SIMPLEX, 3.0, (255, 0, 0), 10)
+	elif label != -1 and timer != 0 and (getTime() - timer) > duration:
+		cv2.putText(frame_rgb, "CAPTURE", (50,50), font, 3.0, rgb, 10)
 		# Get csv data from a frame
-		result = pose.process(frame_rgb)
+		#result = pose.process(frame_rgb)
 		if result.pose_landmarks is not None:
-			mp_drawing.draw_landmarks(frame_rgb, result.pose_landmarks, mp_pose.POSE_CONNECTIONS)
-			csv_data = write_landmarks_to_csv(result.pose_landmarks.landmark)
-			csv_data.append(label)
-			key = cv2.waitKey(-1) & 0xff	
-			if key == ord(' '):
-				writer.writerow(csv_data) # Write a csv file
+			#mp_drawing.draw_landmarks(frame_rgb, result.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+			csv_data = write_landmarks_to_csv(result.pose_landmarks.landmark, label)
+			#csv_data.append(label)
+			writer.writerow(csv_data) # Write a csv file
 		label = -1
 		timer = 0
 		count+=1
 	else :
-		cv2.putText(frame_rgb, f"{time.time() - timer} sec", (50,50), cv2.FONT_HERSHEY_SIMPLEX, 2.0, (255, 0, 0), 2)
-		cv2.putText(frame_rgb, labels[label], (300, 500), cv2.FONT_HERSHEY_SIMPLEX, 10.0, (255, 0, 0), 50)
-		cv2.putText(frame_rgb, f"count: {count}", (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 2.0, (255, 0, 0), 50)
+		cv2.putText(frame_rgb, f"{time.time() - timer} sec", (50,50), font, 2.0, rgb, 2)
+		cv2.putText(frame_rgb, f"{count}:{labels[label]}", (50, 500), font, 10.0, rgb, 50)
 # Release open resources
 file.close()
 video.release()
