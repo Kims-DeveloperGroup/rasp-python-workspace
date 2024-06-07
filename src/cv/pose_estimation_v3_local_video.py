@@ -85,16 +85,15 @@ def run():
 			break
 		elif started == False and key != ord(' '):
 			cv2.putText(frame_rgb, 'READY', (50, 500), font, 15.0, rgb, 50)
+			count = 0
 		elif started == False and key == ord(' '):
 			started = True
 			cv2.putText(frame_rgb, 'START', (50, 500), font, 15.0, rgb, 50)
-		elif count != 0 and count % 10 == 0 : # At dvery 10 dataset, decide to continue or not
-			cv2.putText(frame_rgb, 'CONTINUE \nOR NOT', (50, 500), font, 5.0, rgb, 10)
-			#key = cv2.waitKey(-1) & 0xff
-			if key == 27:# Stop
-				break
-			else : # Continue
-				timer = 0
+		# At dvery 10 dataset, decide to continue or not
+		elif count > 0 and count % 10 == 0 and started == True : 
+			cv2.putText(frame_rgb, 'CONTINUE OR NOT', (50, 500), font, 5.0, rgb, 10)
+			if key == ord(' '): # Contiune and ready
+				started = False
 		# Lable frames and write in a csv file
 		elif started == True and label == -1 and timer == 0: 
 			label = random_label()
@@ -122,4 +121,4 @@ def run():
 	cv2.destroyAllWindows()
 	
 	model_path = 'tf/models/boxing_pose_est_v1.keras'
-	train(data_file_path, model_path)
+	train(data_file_path, model_path, 50)
