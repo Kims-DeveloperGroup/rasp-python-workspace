@@ -1,4 +1,4 @@
-from tf.regression_train_csv import train
+import tf.regression_train_csv as t
 import cv2
 from cv2 import VideoCapture
 import matplotlib.pyplot as plt
@@ -20,7 +20,7 @@ pose = mp_pose.Pose()
 
 import random
 def random_label():
-	return random.randint(0, 8)
+	return random.randint(0, 9)
 
 def write_landmarks_to_csv(landmarks, label):
 	csv_data = []
@@ -45,10 +45,9 @@ def create_file_writer(path):
 		column_names.append(f'{landmark.name}-y')
 		column_names.append(f'{landmark.name}-z')
 	column_names.append('label')
-	print(column_names)
 	writer.writerow(column_names)
 	return (writer, file)
-def run():
+def run(testRun = False):
 	data_file_path = '/Users/rica/Documents/data_v3.csv' 
 	writer, file = create_file_writer(data_file_path)
 	
@@ -88,7 +87,7 @@ def run():
 			count = 0
 		elif started == False and key == ord(' '):
 			started = True
-			cv2.putText(frame_rgb, 'START', (50, 500), font, 15.0, rgb, 50)
+			time.sleep(5)
 		# At dvery 10 dataset, decide to continue or not
 		elif count > 0 and count % 10 == 0 and started == True : 
 			cv2.putText(frame_rgb, 'CONTINUE OR NOT', (50, 500), font, 5.0, rgb, 10)
@@ -121,4 +120,6 @@ def run():
 	cv2.destroyAllWindows()
 	
 	model_path = 'tf/models/boxing_pose_est_v1.keras'
-	train(data_file_path, model_path, 50)
+	if testRun == False:
+		t.train(data_file_path, model_path, 100)
+	t.test(data_file_path, model_path)	
