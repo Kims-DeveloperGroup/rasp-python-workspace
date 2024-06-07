@@ -1,3 +1,4 @@
+from tf.regression_train_csv import train
 import cv2
 from cv2 import VideoCapture
 import matplotlib.pyplot as plt
@@ -11,6 +12,12 @@ import time
 # 6: Front Hand Body Shot, 7: Back Hand Body Shot
 # 7: Body Jab 8: Body Straigh
 labels = ['Jab', 'Straight', 'F-Hook', 'B-Hook', 'F-Upper', 'B-Upper', 'F-Body', 'B-Body', 'Body Jab', 'Body Straight']
+
+# Initialize MediaPipe Pose and Drawing utilities
+mp_pose = mp.solutions.pose
+mp_drawing = mp.solutions.drawing_utils
+pose = mp_pose.Pose()
+
 import random
 def random_label():
 	return random.randint(0, 8)
@@ -29,15 +36,22 @@ def write_landmarks_to_csv(landmarks, label):
 timer = 0
 def getTime():
 	return time.time()
-# Init data.csv and open the file writer
+def create_file_writer(path):
+	# Init data.csv and open the file writer
+	file = open(path, 'w', newline='')
+	writer = csv.writer(file)
+	column_names = []
+	for landmark in mp_pose.PoseLandmark:
+		column_names.append(f'{landmark.name}-x')
+		column_names.append(f'{landmark.name}-y')
+		column_names.append(f'{landmark.name}-z')
+	column_names.append('label')
+	print(column_names)
+	writer.writerow(column_names)
+	return (writer, file)
 data_file_path = '/Users/rica/Documents/data_v3.csv' 
-file = open(data_file_path, 'w', newline='')
-writer = csv.writer(file)
+writer, file = create_file_writer(data_file_path)
 
-# Initialize MediaPipe Pose and Drawing utilities
-mp_pose = mp.solutions.pose
-mp_drawing = mp.solutions.drawing_utils
-pose = mp_pose.Pose()
 #Text Config
 rgb = (255, 0, 0)
 font = cv2.FONT_HERSHEY_SIMPLEX
@@ -86,7 +100,7 @@ while video.isOpened():
 		labelText = labels[label]
 		print(f'label={label} value:{labelText}')
 		timer = getTime()
-	elif label != -1 and timer != 0 and (getTime() - timer) > duration:
+	elif label != -1 and timer != 0 and (getTime() - timer) > capture_duration:
 		cv2.putText(frame_rgb, "CAPTURE", (50,50), font, 3.0, rgb, 10)
 		# Get csv data from a frame
 		#result = pose.process(frame_rgb)
@@ -105,3 +119,6 @@ while video.isOpened():
 file.close()
 video.release()
 cv2.destroyAllWindows()
+
+model_path = 'tf/models/boxing_pose_est_v1.keras'
+train(data_file_path, model_path)
