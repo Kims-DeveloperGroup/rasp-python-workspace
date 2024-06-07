@@ -7,7 +7,7 @@ import os
 import time
 import tensorflow as tf
 from tensorflow.keras import layers
-def train(dataset_path, model_path):
+def train(dataset_path, model_path, epochs):
 	# Load csv data and make features and labels
 	model = None
 	try:
@@ -37,7 +37,7 @@ def train(dataset_path, model_path):
 	                      optimizer = tf.keras.optimizers.Adam())
 	
 	# Train model
-	model.fit(features, labels, epochs=10)
+	model.fit(features, labels, epochs=epochs)
 	model.save(model_path)
 
 path = '/Users/rica/Documents/data_v3.csv'
