@@ -30,10 +30,11 @@ def train(dataset_path, model_path, epochs):
 		model = tf.keras.Sequential([
 	  	normalizer,
 	  	layers.Dense(64, activation='relu'),
+		layers.Dense(64, activation='relu'),
 	  	layers.Dense(1)
 		])
 	
-		model.compile(loss = tf.keras.losses.MeanSquaredError(),
+		model.compile(loss = tf.keras.losses.MeanAbsoluteError(),
 	                      optimizer = tf.keras.optimizers.Adam())
 	
 	# Train model
@@ -69,3 +70,7 @@ def loadFileAndTest(dataset_path, model_path):
 	expected = np.array(dataset.pop("label"))
 	features = np.array(dataset)
 	test(features, expected, model)	
+
+def trainAndTest(dataset_path, model_path, trainEpochs):
+	train(dataset_path, model_path, trainEpochs)
+	loadFileAndTest(dataset_path, model_path)
