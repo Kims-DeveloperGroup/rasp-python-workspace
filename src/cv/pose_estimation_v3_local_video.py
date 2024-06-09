@@ -11,7 +11,7 @@ import time
 # 4: Front Hand Upper Cut, 5: Back Hand Upper Cut
 # 6: Front Hand Body Shot, 7: Back Hand Body Shot
 # 8: Body Jab 9: Body Straigh
-labels = ['Jab', 'Straight', 'F-Hook', 'B-Hook', 'F-Upper', 'B-Upper', 'F-Body', 'B-Body', 'Body Jab', 'Body Straight']
+labels = ['Jab', 'Straight', 'FR-Hook', 'BH-Hook', 'FR-Upper', 'BH-Upper', 'FR-Body', 'BH-Body', 'BodyJab', 'BodyStraight']
 
 # Initialize MediaPipe Pose and Drawing utilities
 mp_pose = mp.solutions.pose
@@ -146,7 +146,7 @@ def run(testRun = False, chunk = 10, labelsToRun = [], epochsToTrain = None):
 	fileForAll.close()
 	video.release()
 	cv2.destroyAllWindows()
-	model_path = 'tf/models/boxing_pose_est_v1.keras'
+	model_path = 'tf/models/boxing_pose_est_v2_0.keras'
 	model = None
 	if testRun == False:
 		epochs = epochsToTrain
