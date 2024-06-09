@@ -105,7 +105,7 @@ def run(testRun = False, chunk = 10, labelsToRun = [], epochsToTrain = None):
 			currDuration+=1
 			cv2.putText(frame_rgb, f'{(durationBeforeStart - currDuration)/10}', (50, 500), font, 5.0, rgb, 10)
 		elif started == False and key != ord(' '):
-			cv2.putText(frame_rgb, 'READY', (50, 500), font, 15.0, rgb, 50)
+			cv2.putText(frame_rgb, 'READY', (50, 800), font, 15.0, rgb, 50)
 			count = 0
 		elif started == False and key == ord(' '):
 			started = True
@@ -116,15 +116,14 @@ def run(testRun = False, chunk = 10, labelsToRun = [], epochsToTrain = None):
 				started = False
 		# Lable frames and write in a csv file
 		elif started == True and label == -1 and timer == 0: 
-			if labelsToRun: 
-				label = labelsToRun.pop()
+			if labelsToRun:
+				label = labelsToRun[count % len(labelsToRun)]
 			else:
 				label = random_label()
 			labelText = labels[label]
 			print(f'label={label} value:{labelText}')
 			timer = getTime()
 		elif label != -1 and timer != 0 and (getTime() - timer) > capture_duration:
-			cv2.putText(frame_rgb, "CAPTURE", (50,50), font, 3.0, rgb, 10)
 			# Get csv data from a frame
 			#result = pose.process(frame_rgb)
 			if result.pose_landmarks is not None:
@@ -141,7 +140,7 @@ def run(testRun = False, chunk = 10, labelsToRun = [], epochsToTrain = None):
 			count+=1
 		else :
 			cv2.putText(frame_rgb, f"{time.time() - timer} sec", (50,50), font, 2.0, rgb, 2)
-			cv2.putText(frame_rgb, f"{count}:{labels[label]}", (50, 500), font, 10.0, rgb, 50)
+			cv2.putText(frame_rgb, f"{count}:{labels[label]}", (50, 800), font, 10.0, rgb, 50)
 	# Release open resources
 	file.close()
 	fileForAll.close()
