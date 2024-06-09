@@ -48,13 +48,10 @@ model_path = 'tf/models/test_v1.keras'
 def avg(lst): 
     return sum(lst) / len(lst)
 
-def test(dataset_path, model_path):
-	model = tf.keras.models.load_model(model_path)
-	dataset = pd.read_csv(dataset_path)
-	expected = np.array(dataset.pop("label"))
-	features = np.array(dataset)
-
+def test(features, labels, model):
+	expected = labels
 	actual = model.predict(features)
+
 	actualValue = []
 	for value in actual:
 		actualValue.append(value[0])
@@ -64,5 +61,11 @@ def test(dataset_path, model_path):
 	diff= []
 	for idx, value in enumerate(actualValue):
 		diff.append(abs(value - expected[idx]))
-	print(f'diff={diff}\n')
-	print(f'{avg(diff)}\n')
+	print(f'diff={diff} {avg(diff)}\n')
+
+def loadFileAndTest(dataset_path, model_path):
+	model = tf.keras.models.load_model(model_path)
+	dataset = pd.read_csv(dataset_path)
+	expected = np.array(dataset.pop("label"))
+	features = np.array(dataset)
+	test(features, expected, model)	

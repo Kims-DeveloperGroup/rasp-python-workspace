@@ -47,7 +47,7 @@ def create_file_writer(path):
 	column_names.append('label')
 	writer.writerow(column_names)
 	return (writer, file)
-def run(testRun = False):
+def run(testRun = False, chunk = 10):
 	data_file_path = '/Users/rica/Documents/data_v3.csv' 
 	writer, file = create_file_writer(data_file_path)
 	
@@ -60,12 +60,17 @@ def run(testRun = False):
 	video = VideoCapture(video_src)
 	label = -1
 	timer = 0
+	chunkSize = chunk
 	count = 0
 	total_data_count = 0
 	started = False
 	capture_duration = 3 # Time unit:sec
 	durationBeforeStart = 70 # frame count
 	currDuration = 0
+	
+	# Store features and labels
+	actualLabels = []
+	actualFeatures = []
 	# Key guide
 	# Space: Stop a video for labeling
 	while video.isOpened():
@@ -95,7 +100,7 @@ def run(testRun = False):
 		elif started == False and key == ord(' '):
 			started = True
 		# At dvery 10 dataset, decide to continue or not
-		elif count > 0 and count % 10 == 0 and started == True : 
+		elif count > 0 and (count % chunkSize) == 0 and started == True : 
 			cv2.putText(frame_rgb, 'CONTINUE OR NOT', (50, 500), font, 5.0, rgb, 10)
 			if key == ord(' '): # Contiune and ready
 				started = False
@@ -114,6 +119,8 @@ def run(testRun = False):
 				csv_data = write_landmarks_to_csv(result.pose_landmarks.landmark, label)
 				#csv_data.append(label)
 				writer.writerow(csv_data) # Write a csv file
+				actualFeatures.append(csv_data)
+				actualLabels.append(label)
 				total_data_count+=1
 			label = -1
 			timer = 0
@@ -125,8 +132,12 @@ def run(testRun = False):
 	file.close()
 	video.release()
 	cv2.destroyAllWindows()
-	
+	print("release")	
 	model_path = 'tf/models/boxing_pose_est_v1.keras'
+	model = None
 	if testRun == False:
-		t.train(data_file_path, model_path, total_data_count * 20)
-	t.test(data_file_path, model_path)	
+		model = t.train(data_file_path, model_path, total_data_count * 20)
+	if model is None:
+		t.loadFileAndTest(data_file_path, model_path)
+	else:
+		t.test(actualFeatures, actualLabels, model)
