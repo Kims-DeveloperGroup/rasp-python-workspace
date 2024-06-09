@@ -47,7 +47,12 @@ def create_file_writer(path):
 	column_names.append('label')
 	writer.writerow(column_names)
 	return (writer, file)
-def run(testRun = False, chunk = 10):
+
+#
+# testRun: if True, model is not trained
+# chunk: interval of data size to capture
+# labelsToRun: labels of captured data. If the param is empty, labels are randomly generated.
+def run(testRun = False, chunk = 10, labelsToRun = [], epochsToTrain = None):
 	data_file_path = '/Users/rica/Documents/data_v3.csv' 
 	writer, file = create_file_writer(data_file_path)
 	
@@ -93,7 +98,7 @@ def run(testRun = False, chunk = 10):
 		# Give standby time before starting
 		elif started == True and currDuration < durationBeforeStart:
 			currDuration+=1
-			cv2.putText(frame_rgb, f'{durationBeforeStart - currDuration}', (50, 500), font, 5.0, rgb, 10)
+			cv2.putText(frame_rgb, f'{(durationBeforeStart - currDuration)/10}', (50, 500), font, 5.0, rgb, 10)
 		elif started == False and key != ord(' '):
 			cv2.putText(frame_rgb, 'READY', (50, 500), font, 15.0, rgb, 50)
 			count = 0
@@ -106,7 +111,10 @@ def run(testRun = False, chunk = 10):
 				started = False
 		# Lable frames and write in a csv file
 		elif started == True and label == -1 and timer == 0: 
-			label = random_label()
+			if labelsToRun: 
+				label = labelsToRun.pop()
+			else:
+				label = random_label()
 			labelText = labels[label]
 			print(f'label={label} value:{labelText}')
 			timer = getTime()
@@ -119,7 +127,7 @@ def run(testRun = False, chunk = 10):
 				csv_data = write_landmarks_to_csv(result.pose_landmarks.landmark, label)
 				#csv_data.append(label)
 				writer.writerow(csv_data) # Write a csv file
-				actualFeatures.append(csv_data)
+				actualFeatures.append(csv_data.copy().pop())
 				actualLabels.append(label)
 				total_data_count+=1
 			label = -1
@@ -132,12 +140,15 @@ def run(testRun = False, chunk = 10):
 	file.close()
 	video.release()
 	cv2.destroyAllWindows()
-	print("release")	
 	model_path = 'tf/models/boxing_pose_est_v1.keras'
 	model = None
 	if testRun == False:
-		model = t.train(data_file_path, model_path, total_data_count * 20)
+		epochs = epochsToTrain
+		if epochs is None:
+			epochs = total_data_count * 20
+		t.train(data_file_path, model_path, epochs)
+		#model= t.train(data_file_path, model_path, epochs)
 	if model is None:
 		t.loadFileAndTest(data_file_path, model_path)
 	else:
-		t.test(actualFeatures, actualLabels, model)
+		t.test(features=np.array(actualFeatures), labels=np.array(actualLabels), model=model)
