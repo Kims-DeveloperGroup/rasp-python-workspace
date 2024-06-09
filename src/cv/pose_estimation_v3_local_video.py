@@ -35,16 +35,20 @@ def write_landmarks_to_csv(landmarks, label):
 	return csv_data
 def getTime():
 	return time.time()
-def create_file_writer(path):
+
+import os.path
+def create_file_writer(path, mode = 'w'):
 	# Init data.csv and open the file writer
-	file = open(path, 'w', newline='')
+	existsFile = os.path.exists(path)
+	file = open(path, mode, newline='')
 	writer = csv.writer(file)
 	column_names = []
-	for landmark in mp_pose.PoseLandmark:
-		column_names.append(f'{landmark.name}-x')
-		column_names.append(f'{landmark.name}-y')
-		column_names.append(f'{landmark.name}-z')
-	column_names.append('label')
+	if mode == 'w' or (mode == 'a' and existsFile == False):
+		for landmark in mp_pose.PoseLandmark:
+			column_names.append(f'{landmark.name}-x')
+			column_names.append(f'{landmark.name}-y')
+			column_names.append(f'{landmark.name}-z')
+		column_names.append('label')
 	writer.writerow(column_names)
 	return (writer, file)
 
@@ -55,7 +59,8 @@ def create_file_writer(path):
 def run(testRun = False, chunk = 10, labelsToRun = [], epochsToTrain = None):
 	data_file_path = '/Users/rica/Documents/data_v3.csv' 
 	writer, file = create_file_writer(data_file_path)
-	
+	data_file_for_all_path = '/Users/rica/Documents/data_for_all.csv' 
+	writerForFileForAll, fileForAll = create_file_writer(data_file_for_all_path, mode='a')
 	#Text Config
 	rgb = (255, 0, 0)
 	font = cv2.FONT_HERSHEY_SIMPLEX
@@ -127,6 +132,7 @@ def run(testRun = False, chunk = 10, labelsToRun = [], epochsToTrain = None):
 				csv_data = write_landmarks_to_csv(result.pose_landmarks.landmark, label)
 				#csv_data.append(label)
 				writer.writerow(csv_data) # Write a csv file
+				writerForFileForAll.writerow(csv_data)
 				actualFeatures.append(csv_data.copy().pop())
 				actualLabels.append(label)
 				total_data_count+=1
@@ -138,6 +144,7 @@ def run(testRun = False, chunk = 10, labelsToRun = [], epochsToTrain = None):
 			cv2.putText(frame_rgb, f"{count}:{labels[label]}", (50, 500), font, 10.0, rgb, 50)
 	# Release open resources
 	file.close()
+	fileForAll.close()
 	video.release()
 	cv2.destroyAllWindows()
 	model_path = 'tf/models/boxing_pose_est_v1.keras'
