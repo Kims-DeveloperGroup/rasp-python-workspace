@@ -155,6 +155,7 @@ def run(testRun = False, chunk = 10, labelsToRun = [], epochsToTrain = None):
 		t.train(data_file_path, model_path, epochs)
 		#model= t.train(data_file_path, model_path, epochs)
 	if model is None:
+		t.loadFileAndTest(data_file_for_all_path, model_path)
 		t.loadFileAndTest(data_file_path, model_path)
 	else:
 		t.test(features=np.array(actualFeatures), labels=np.array(actualLabels), model=model)
