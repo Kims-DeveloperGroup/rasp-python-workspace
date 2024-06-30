@@ -56,10 +56,13 @@ def create_file_writer(path, mode = 'w'):
 # testRun: if True, model is not trained
 # chunk: interval of data size to capture
 # labelsToRun: labels of captured data. If the param is empty, labels are randomly generated.
-def run(testRun = False, chunk = 10, labelsToRun = [], epochsToTrain = None):
-	data_file_path = '/Users/rica/Documents/data_v3.csv' 
+def run(testRun = False, chunk = 10, labelsToRun = [], epochsToTrain = None, data_file_path='/Users/rica/Documents/data_v3.csv'):
 	writer, file = create_file_writer(data_file_path)
-	data_file_for_all_path = '/Users/rica/Documents/data_for_all.csv' 
+	data_file_for_all_path = None 
+	if testRun == True :
+		data_file_for_all_path = '/Users/rica/Documents/data_for_test.csv'
+	else :
+		data_file_for_all_path = '/Users/rica/Documents/data_for_all.csv'
 	writerForFileForAll, fileForAll = create_file_writer(data_file_for_all_path, mode='a')
 	#Text Config
 	rgb = (255, 0, 0)
@@ -154,8 +157,4 @@ def run(testRun = False, chunk = 10, labelsToRun = [], epochsToTrain = None):
 			epochs = total_data_count * 20
 		t.train(data_file_path, model_path, epochs)
 		#model= t.train(data_file_path, model_path, epochs)
-	if model is None:
-		t.loadFileAndTest(data_file_for_all_path, model_path)
-		t.loadFileAndTest(data_file_path, model_path)
-	else:
-		t.test(features=np.array(actualFeatures), labels=np.array(actualLabels), model=model)
+	t.loadFileAndTest(data_file_for_all_path, model_path)
