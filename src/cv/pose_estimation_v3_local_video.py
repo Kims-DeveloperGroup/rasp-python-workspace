@@ -149,7 +149,7 @@ def run(testRun = False, chunk = 10, labelsToRun = [], epochsToTrain = None, dat
 	fileForAll.close()
 	video.release()
 	cv2.destroyAllWindows()
-	model_path = 'tf/models/boxing_pose_est_v2_0.keras'
+	model_path = 'tf/models/boxing_pose_est_v3_0.keras'
 	model = None
 	if testRun == False:
 		epochs = epochsToTrain

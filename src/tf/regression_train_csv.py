@@ -5,6 +5,8 @@ import os
 import time
 import tensorflow as tf
 from tensorflow.keras import layers
+
+labelNames = ['Jab', 'Straight', 'FR-Hook', 'BH-Hook', 'FR-Upper', 'BH-Upper', 'FR-Body', 'BH-Body    ', 'BodyJab', 'BodyStraight']
 def train(dataset_path, model_path, epochs):
 	# Load csv data and make features and labels
 	model = None
@@ -24,21 +26,23 @@ def _train(features, labels, epochs= 10, model = None):
 	#Preprocessing dataset
 	normalizer = layers.Normalization()
 	normalizer.adapt(features.copy())
-	onehot_enc = tf.one_hot(indices=labels, depth=10, dtype = tf.int32)
+	onehot_enc = tf.one_hot(indices=labels, depth=10, dtype = tf.float32)
 	# Make regression model
 	if model is None:
 		model = tf.keras.Sequential([
-		layers.InputLayer(input_shape=(33 * 3,)),
+		layers.InputLayer(shape=(33 * 3,)),
 	  	normalizer,
-	  	layers.Dense(64, activation='relu'),
-	  	layers.Dense(32, activation='relu'),
-	  	layers.Dense(16, activation='relu'),
-	  	#layers.Dense(10),
-		layers.Dense(10, activation='softmax'),
+	  	#layers.Dense(99, activation='relu'),
+	  	#layers.Dense(32, activation='relu'),
+	  	layers.Dense(1024, activation='relu'),
+		layers.Dropout(rate=0.3),
+	  	layers.Dense(10, activation='softmax'),
+		#layers.Dense(10),
 		])
 	
-		model.compile(loss = tf.keras.losses.MeanAbsoluteError(),
-	                      optimizer = tf.keras.optimizers.Adam())
+		model.compile(loss = tf.keras.losses.CategoricalCrossentropy(),
+	                      optimizer = tf.keras.optimizers.Adam(),
+						  metrics = [tf.keras.metrics.CategoricalAccuracy()])
 	# Train model
 	model.fit(features, onehot_enc, epochs=epochs)
 	return model
@@ -46,6 +50,7 @@ def _train(features, labels, epochs= 10, model = None):
 def test(features, labels, model):
 	expected = labels
 	actual = model.predict(features)
+	loss, accuracy = model.evaluate(features, tf.one_hot(indices=labels, depth=10, dtype = tf.float32))
 	copied_features = features.copy()
 	error_feats = []
 	error_labels = []
@@ -55,7 +60,8 @@ def test(features, labels, model):
 			flag = '[INCORRECT]'
 			error_feats.append(features[idx])
 			error_labels.append(expected[idx])
-			print(f'{flag} expected={expected[idx]} predicted={np.argmax(value)},\n values={value}')
+			print(f'{flag} {idx}. expected={labelNames[expected[idx]]} predicted={labelNames[np.argmax(value)]},\n values={value}')
+	print(f'total={len(features)} errors={len(error_feats)}')
 	return np.array(error_feats), np.array(error_labels)
 
 def loadFileAndTest(dataset_path, model_path):
