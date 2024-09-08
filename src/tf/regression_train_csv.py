@@ -18,7 +18,7 @@ def normalize(poses):
 			normalized[0] = normalized[0] - landmarks[min_xyz[0]][0]	
 			normalized[1] = normalized[1] - landmarks[min_xyz[1]][1]	
 			normalized[2] = normalized[2] - landmarks[min_xyz[2]][2]
-		normalized_poses.append(normalized)
+		normalized_poses.append(normalized.tolist())
 	return normalized_poses 
 
 def train(dataset_path, model_path, epochs):
