@@ -7,6 +7,20 @@ import tensorflow as tf
 from tensorflow.keras import layers
 
 labelNames = ['Jab', 'Straight', 'FR-Hook', 'BH-Hook', 'FR-Upper', 'BH-Upper', 'FR-Body', 'BH-Body    ', 'BodyJab', 'BodyStraight']
+
+def normalize(poses):
+	normalized_poses =  []
+	for pose in poses:
+		landmarks = pose
+		min_xyz = landmarks.argmin(axis=0)
+		normalized = landmarks.copy()
+		for landmark in landmarks:
+			normalized[0] = normalized[0] - landmarks[min_xyz[0]][0]	
+			normalized[1] = normalized[1] - landmarks[min_xyz[1]][1]	
+			normalized[2] = normalized[2] - landmarks[min_xyz[2]][2]
+		normalized_poses.append(normalized)
+	return normalized_poses 
+
 def train(dataset_path, model_path, epochs):
 	# Load csv data and make features and labels
 	model = None
