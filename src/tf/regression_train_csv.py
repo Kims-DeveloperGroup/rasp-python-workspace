@@ -8,10 +8,14 @@ from tensorflow.keras import layers
 
 labelNames = ['Jab', 'Straight', 'FR-Hook', 'BH-Hook', 'FR-Upper', 'BH-Upper', 'FR-Body', 'BH-Body    ', 'BodyJab', 'BodyStraight']
 
-def normalize(poses):
+def normalize(poses, truncate_feat=True):
+     poses=poses.reshape((-1, 33,3))
      normalized_poses =  []
      for pose in poses:
-         landmarks = pose[11:]
+         if truncate_feat == True:
+             landmarks = pose[11:]
+         else:
+             landmarks = pose
          min_xyz = landmarks.argmin(axis=0)
          minX = landmarks[min_xyz[0]][0]
          minY = landmarks[min_xyz[1]][1]
@@ -22,10 +26,28 @@ def normalize(poses):
              #print(f'before={normalized}')
              normalized[0] = landmark[0] - minX
              normalized[1] = landmark[1] - minY
+             normalized[2] = landmark[2] - minZ
              #print(f'after={normalized}')
              normalized_landmarks.append(normalized.tolist())
          normalized_poses.append(normalized_landmarks)
      return np.array(normalized_poses)
+
+def normalize_file(source, dest, truncate_feat=False):
+    dataset = pd.read_csv(source).sort_values(by='label', axis= 0)
+    
+    labels= np.array(dataset.pop('label'))
+    cols= dataset.columns.tolist()
+    feats = np.array(dataset).reshape((-1, 33,3))
+    
+    normalized_feats = []
+    for feat in normalize(feats, truncate_feat):
+        normalized_feats.append(feat.flatten())
+    normalized_feats = np.array(normalized_feats)
+    if truncate_feat == True:
+        cols = cols[33:]
+    dp = pd.DataFrame(data=normalized_feats, columns=cols)
+    dp.insert(loc=0, column='label', value=labels)
+    dp.to_csv(path_or_buf=dest, mode='w', index=False)
 
 def train(dataset_path, model_path, epochs):
 	# Load csv data and make features and labels
@@ -45,7 +67,6 @@ def train(dataset_path, model_path, epochs):
 
 def _train(features, labels, epochs= 10, model = None):
 	features_copy = features.copy()
-	features_copy = np.reshape(features_copy, (-1, 33,3))
 	features_copy = normalize(features_copy)
 	onehot_enc = tf.one_hot(indices=labels, depth=10, dtype = tf.float32)
 
@@ -76,7 +97,6 @@ def _train(features, labels, epochs= 10, model = None):
 	return model
 
 def test(features, labels, model):
-	features = np.reshape(features, (-1, 33,3))
 	features = normalize(features)
 	expected = labels
 	actual = model.predict(features)
