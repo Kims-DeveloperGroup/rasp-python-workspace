@@ -5,12 +5,14 @@ import os
 import time
 import tensorflow as tf
 from tensorflow.keras import layers
+import matplotlib.pyplot as plt
+plt.style.use('_mpl-gallery')
 
 labelNames = ['Jab', 'Straight', 'FR-Hook', 'BH-Hook', 'FR-Upper', 'BH-Upper', 'FR-Body', 'BH-Body    ', 'BodyJab', 'BodyStraight']
 
 active_landmark_indices = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32]
 
-def train(dataset_path, model_path, epochs, test_dataset_path):
+def train(dataset_path, model_path, epochs, test_dataset_path, learning_rate):
 	# Load csv data and make features and labels
 	model = None
 	try:
@@ -22,7 +24,15 @@ def train(dataset_path, model_path, epochs, test_dataset_path):
 	labels = np.array(dataset.pop("label"))
 	features = np.array(dataset)
 	test_feats, test_labels = _loadDataset(test_dataset_path)
-	trained_model = _train(features, labels, test_features= test_feats, test_labels=test_labels, epochs=epochs, model=model)
+	trained_model = _train(
+						features,
+						labels,
+						test_features= test_feats,
+						test_labels=test_labels,
+						epochs=epochs,
+						model=model,
+						learning_rate = learning_rate,
+					)
 	trained_model.save(model_path)
 	trained_model.summary()
 	return model
@@ -32,15 +42,44 @@ class TrainCallback(tf.keras.callbacks.Callback):
 		self.m = m
 		self.f = f
 		self.l = l
+		self.p1 = plt.subplots()[1]
+		self.p1.lable = '손실'
+		self.p2 = plt.subplots()[1]
+		self.p2.label = '예측정확도'
+		self.x = []
+		self.acc = []
+		self.loss = []
+		self.val_acc = []
+		self.val_loss = []
+		self.test_acc =  []
+		self.test_loss = []
 
 	def on_epoch_end(self, epoch, logs={}):
 		loss, accuracy = self.m.evaluate(self.f, tf.one_hot(indices=self.l, depth=10, dtype = tf.float32))
 		print(f'EPOCH {epoch + 1}: test_accuracy={accuracy} test_loss={loss}')
-		if(accuracy >0.80) or (loss > 10.0 and epoch > 100):
+		self.x.append(epoch)
+		self.acc.append(logs['categorical_accuracy'])
+		self.loss.append(logs['loss'])
+		self.val_loss.append(logs['val_loss'])
+		self.val_acc.append(logs['val_categorical_accuracy'])
+		self.test_acc.append(accuracy)
+		self.test_loss.append(loss)
+		if(accuracy >0.85) or (loss > 10.0 and epoch > 100):
 			print(f'RESULT 정확도:{accuracy} 손실: {loss}')
 			self.model.stop_training = True
+	
+	def on_train_end(self, logs=None):
+		print('훈련 끝')
+		self.p1.plot(self.x, self.test_loss,'r', linewidth=2)
+		self.p1.plot(self.x, self.val_loss,'g', linewidth=2)
+		self.p1.plot(self.x, self.loss,'k', linewidth=2)
 
-def _train(features, labels, test_features, test_labels, epochs= 10, model = None):
+		self.p2.plot(self.x, self.acc, 'k', linewidth=2)
+		self.p2.plot(self.x, self.test_acc,'r', linewidth=2)
+		self.p2.plot(self.x, self.val_acc,'g', linewidth=2)
+		plt.show()
+
+def _train(features, labels, test_features, test_labels, learning_rate, epochs= 10, model = None):
 	features_copy = features.copy()
 	features_copy = features_copy.reshape((-1, 33,3))
 	test_features= test_features.reshape((-1, 33,3))
@@ -62,7 +101,7 @@ def _train(features, labels, test_features, test_labels, epochs= 10, model = Non
 		])
 	
 		model.compile(loss = tf.keras.losses.CategoricalCrossentropy(),
-	                      optimizer = tf.keras.optimizers.Adam(),
+	                      optimizer = tf.keras.optimizers.Adam(learning_rate = learning_rate),
 						  metrics = [tf.keras.metrics.CategoricalAccuracy()])
 	# Train model
 	model.fit(
