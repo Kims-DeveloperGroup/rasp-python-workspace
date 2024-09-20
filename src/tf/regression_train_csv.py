@@ -54,12 +54,8 @@ def _train(features, labels, test_features, test_labels, epochs= 10, model = Non
 	# Make regression model
 	if model is None:
 		model = tf.keras.Sequential([
-		#layers.InputLayer(shape=(33,3)),
 	  	normalizer,
 	  	layers.Flatten(),
-		#layers.Dense(189, activation='relu'),
-		#layers.Dense(90, activation='relu'),
-		#layers.Dropout(rate=0.2),
 	  	layers.Dense(10, activation='relu'),
 		layers.Dropout(rate=0.2),
 	  	layers.Dense(10, activation='softmax'),
