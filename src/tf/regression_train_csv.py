@@ -27,8 +27,6 @@ def train(dataset_path, model_path, epochs, test_dataset_path):
 	trained_model.summary()
 	return model
 
-globalModel = None
-
 class TrainCallback(tf.keras.callbacks.Callback):
 	def __init__(self, m, f, l):
 		self.m = m
@@ -37,17 +35,19 @@ class TrainCallback(tf.keras.callbacks.Callback):
 
 	def on_epoch_end(self, epoch, logs={}):
 		loss, accuracy = self.m.evaluate(self.f, tf.one_hot(indices=self.l, depth=10, dtype = tf.float32))
-		print(f'accuracy={accuracy}')
-		if(accuracy >0.80):
-			print(f'logs={logs}')
+		print(f'EPOCH {epoch + 1}: test_accuracy={accuracy} test_loss={loss}')
+		if(accuracy >0.80) or (loss > 10.0 and epoch > 100):
+			print(f'RESULT 정확도:{accuracy} 손실: {loss}')
 			self.model.stop_training = True
 
 def _train(features, labels, test_features, test_labels, epochs= 10, model = None):
-	features_copy= features.copy().reshape((-1, 33,3))
+	features_copy = features.copy()
+	features_copy = features_copy.reshape((-1, 33,3))
 	test_features= test_features.reshape((-1, 33,3))
 	onehot_enc = tf.one_hot(indices=labels, depth=10, dtype = tf.float32)
 	
 	features_copy = features_copy.take(active_landmark_indices, axis=1)
+	test_features = test_features.take(active_landmark_indices, axis=1)
 	normalizer = layers.Normalization(axis=-1)
 	normalizer.adapt(features_copy)
 
@@ -64,14 +64,11 @@ def _train(features, labels, test_features, test_labels, epochs= 10, model = Non
 		layers.Dropout(rate=0.2),
 	  	layers.Dense(10, activation='softmax'),
 		])
-		globalModel= model
 	
 		model.compile(loss = tf.keras.losses.CategoricalCrossentropy(),
 	                      optimizer = tf.keras.optimizers.Adam(),
 						  metrics = [tf.keras.metrics.CategoricalAccuracy()])
 	# Train model
-
-	globalModel = model		
 	model.fit(
 				x=features_copy,
 				y=onehot_enc,
