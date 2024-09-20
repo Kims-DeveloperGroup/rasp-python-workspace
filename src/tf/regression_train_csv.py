@@ -10,48 +10,6 @@ labelNames = ['Jab', 'Straight', 'FR-Hook', 'BH-Hook', 'FR-Upper', 'BH-Upper', '
 
 active_landmark_indices = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32]
 
-def _normalize(poses, truncate_feat=True):
-     poses=poses.reshape((-1, 33,3))
-     normalized_poses =  []
-     for pose in poses:
-         landmarks = None     
-         if truncate_feat == True:
-             landmarks = pose[11:]
-         else:
-             landmarks = pose
-         #11 left shoulder 
-         minX = landmarks[11][0]
-         minY = landmarks[11][1]
-         minZ = landmarks[11][2]
-         normalized_landmarks = []
-         for landmark in landmarks:
-             normalized = landmark.copy()
-             #print(f'before={normalized}')
-             normalized[0] = landmark[0] - minX
-             normalized[1] = landmark[1] - minY
-             normalized[2] = landmark[2] - minZ
-             #print(f'after={normalized}')
-             normalized_landmarks.append(normalized.tolist())
-         normalized_poses.append(normalized_landmarks)
-     return np.array(normalized_poses)
-
-def normalize_file(source, dest, truncate_feat=False):
-    dataset = pd.read_csv(source).sort_values(by='label', axis= 0)
-    
-    labels= np.array(dataset.pop('label'))
-    cols= dataset.columns.tolist()
-    feats = np.array(dataset).reshape((-1, 33,3))
-    
-    normalized_feats = []
-    for feat in _normalize(feats, truncate_feat):
-        normalized_feats.append(feat.flatten())
-    normalized_feats = np.array(normalized_feats)
-    if truncate_feat == True:
-        cols = cols[33:]
-    dp = pd.DataFrame(data=normalized_feats, columns=cols)
-    dp.insert(loc=0, column='label', value=labels)
-    dp.to_csv(path_or_buf=dest, mode='w', index=False)
-
 def train(dataset_path, model_path, epochs, test_dataset_path):
 	# Load csv data and make features and labels
 	model = None
