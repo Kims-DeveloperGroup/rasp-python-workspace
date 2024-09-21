@@ -48,44 +48,32 @@ def train(
 	return model
 
 class TrainCallback(tf.keras.callbacks.Callback):
-	def __init__(self, m, f, l):
-		self.m = m
-		self.f = f
-		self.l = l
+	def __init__(self):
 		self.p1 = plt.subplots()[1]
-		self.p1.lable = '손실'
 		self.p2 = plt.subplots()[1]
-		self.p2.label = '예측정확도'
 		self.x = []
 		self.acc = []
 		self.loss = []
 		self.val_acc = []
 		self.val_loss = []
-		self.test_acc =  []
-		self.test_loss = []
 
 	def on_epoch_end(self, epoch, logs={}):
-		loss, accuracy = self.m.evaluate(self.f, tf.one_hot(indices=self.l, depth=10, dtype = tf.float32))
-		print(f'EPOCH {epoch + 1}: test_accuracy={accuracy} test_loss={loss}')
+		val_loss = logs['val_loss'] 
+		val_acc = logs['val_categorical_accuracy']
 		self.x.append(epoch)
 		self.acc.append(logs['categorical_accuracy'])
 		self.loss.append(logs['loss'])
-		self.val_loss.append(logs['val_loss'])
-		self.val_acc.append(logs['val_categorical_accuracy'])
-		self.test_acc.append(accuracy)
-		self.test_loss.append(loss)
-		if(accuracy >0.85) or (loss > 10.0 and epoch > 100):
-			print(f'RESULT 정확도:{accuracy} 손실: {loss}')
+		self.val_loss.append(val_loss)
+		self.val_acc.append(val_acc)
+		if(val_acc >0.90) or (val_loss > 10.0):
 			self.model.stop_training = True
 	
 	def on_train_end(self, logs=None):
 		print('훈련 끝')
-		self.p1.plot(self.x, self.test_loss,'r', linewidth=2)
 		self.p1.plot(self.x, self.val_loss,'g', linewidth=2)
 		self.p1.plot(self.x, self.loss,'k', linewidth=2)
 
 		self.p2.plot(self.x, self.acc, 'k', linewidth=2)
-		self.p2.plot(self.x, self.test_acc,'r', linewidth=2)
 		self.p2.plot(self.x, self.val_acc,'g', linewidth=2)
 		plt.show()
 
@@ -104,6 +92,7 @@ def _train(
 	features_copy = features_copy.reshape((-1, 33,3))
 	test_features= test_features.reshape((-1, 33,3))
 	onehot_enc = tf.one_hot(indices=labels, depth=10, dtype = tf.float32)
+	test_onehot_enc = tf.one_hot(indices=test_labels, depth=10, dtype = tf.float32)
 	
 	features_copy = features_copy.take(active_landmark_indices, axis=1)
 	test_features = test_features.take(active_landmark_indices, axis=1)
@@ -129,8 +118,9 @@ def _train(
 				y=onehot_enc,
 				epochs=epochs,
 				validation_split = 0.2,
+				validation_data = (test_features, test_onehot_enc),
 				batch_size = batch_size,
-				callbacks= TrainCallback(model, test_features, test_labels)
+				callbacks= TrainCallback()
 			)
 	return model
 
