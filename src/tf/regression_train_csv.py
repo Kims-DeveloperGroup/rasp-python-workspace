@@ -12,7 +12,15 @@ labelNames = ['Jab', 'Straight', 'FR-Hook', 'BH-Hook', 'FR-Upper', 'BH-Upper', '
 
 active_landmark_indices = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32]
 
-def train(dataset_path, model_path, epochs, test_dataset_path, learning_rate):
+def train(
+		dataset_path, 
+		model_path,
+		epochs,
+		test_dataset_path,
+		learning_rate,
+		dropout_rate= 0.2,
+		batch_size = 100,
+	):
 	# Load csv data and make features and labels
 	model = None
 	try:
@@ -30,8 +38,10 @@ def train(dataset_path, model_path, epochs, test_dataset_path, learning_rate):
 						test_features= test_feats,
 						test_labels=test_labels,
 						epochs=epochs,
+						batch_size = batch_size,
 						model=model,
 						learning_rate = learning_rate,
+						dropout_rate = dropout_rate,
 					)
 	trained_model.save(model_path)
 	trained_model.summary()
@@ -79,7 +89,17 @@ class TrainCallback(tf.keras.callbacks.Callback):
 		self.p2.plot(self.x, self.val_acc,'g', linewidth=2)
 		plt.show()
 
-def _train(features, labels, test_features, test_labels, learning_rate, epochs= 10, model = None):
+def _train(
+		features,
+		labels, 
+		test_features,
+		test_labels,
+		learning_rate,
+		batch_size,
+		dropout_rate,
+		epochs= 10,
+		model = None,
+	):
 	features_copy = features.copy()
 	features_copy = features_copy.reshape((-1, 33,3))
 	test_features= test_features.reshape((-1, 33,3))
@@ -96,7 +116,7 @@ def _train(features, labels, test_features, test_labels, learning_rate, epochs= 
 	  	normalizer,
 	  	layers.Flatten(),
 	  	layers.Dense(10, activation='relu'),
-		layers.Dropout(rate=0.2),
+		layers.Dropout(rate = dropout_rate),
 	  	layers.Dense(10, activation='softmax'),
 		])
 	
@@ -109,7 +129,7 @@ def _train(features, labels, test_features, test_labels, learning_rate, epochs= 
 				y=onehot_enc,
 				epochs=epochs,
 				validation_split = 0.2,
-				batch_size = 20,
+				batch_size = batch_size,
 				callbacks= TrainCallback(model, test_features, test_labels)
 			)
 	return model
