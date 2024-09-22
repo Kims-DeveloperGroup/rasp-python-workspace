@@ -6,7 +6,7 @@ import time
 import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow.keras import regularizers
-
+from tensorflow.keras import callbacks
 import matplotlib.pyplot as plt
 plt.style.use('_mpl-gallery')
 
@@ -64,12 +64,14 @@ class TrainCallback(tf.keras.callbacks.Callback):
 	def on_epoch_end(self, epoch, logs={}):
 		val_loss = logs['val_loss'] 
 		val_acc = logs['val_categorical_accuracy']
+		train_data_acc = logs['categorical_accuracy']
+		train_data_loss = logs['loss']
 		self.x.append(epoch)
-		self.acc.append(logs['categorical_accuracy'])
-		self.loss.append(logs['loss'])
+		self.acc.append(train_data_acc)
+		self.loss.append(train_data_loss)
 		self.val_loss.append(val_loss)
 		self.val_acc.append(val_acc)
-		if(val_acc >0.90) or (val_loss > 10.0):
+		if(val_acc >0.90) or (train_data_acc > 90.0):
 			self.model.stop_training = True
 	
 	def on_train_end(self, logs=None):
@@ -122,10 +124,18 @@ def _train(
 				x=features_copy,
 				y=onehot_enc,
 				epochs=epochs,
-				validation_split = 0.2,
+				#validation_split = 0.2,
 				validation_data = (test_features, test_onehot_enc),
 				batch_size = batch_size,
-				callbacks= TrainCallback()
+				callbacks= [
+					TrainCallback(),
+					#callbacks.EarlyStopping(
+					#	monitor='val_categorical_accuracy',
+					#	patience=5,
+					#	restore_best_weights = True,
+					#	start_from_epoch = 1,
+					#),
+				],
 			)
 	return model
 
