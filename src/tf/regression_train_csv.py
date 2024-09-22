@@ -5,6 +5,8 @@ import os
 import time
 import tensorflow as tf
 from tensorflow.keras import layers
+from tensorflow.keras import regularizers
+
 import matplotlib.pyplot as plt
 plt.style.use('_mpl-gallery')
 
@@ -20,6 +22,7 @@ def train(
 		learning_rate,
 		dropout_rate= 0.2,
 		batch_size = 100,
+		regular_rate = 0.0,
 	):
 	# Load csv data and make features and labels
 	model = None
@@ -42,6 +45,7 @@ def train(
 						model=model,
 						learning_rate = learning_rate,
 						dropout_rate = dropout_rate,
+						regular_rate = regular_rate,
 					)
 	trained_model.save(model_path)
 	trained_model.summary()
@@ -85,6 +89,7 @@ def _train(
 		learning_rate,
 		batch_size,
 		dropout_rate,
+		regular_rate,
 		epochs= 10,
 		model = None,
 	):
@@ -104,7 +109,7 @@ def _train(
 		model = tf.keras.Sequential([
 	  	normalizer,
 	  	layers.Flatten(),
-	  	layers.Dense(10, activation='relu'),
+	  	layers.Dense(10, activation='relu', kernel_regularizer = regularizers.L2(regular_rate)),
 		layers.Dropout(rate = dropout_rate),
 	  	layers.Dense(10, activation='softmax'),
 		])
