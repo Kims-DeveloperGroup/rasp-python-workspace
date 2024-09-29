@@ -56,14 +56,8 @@ def create_file_writer(path, mode = 'w'):
 # testRun: if True, model is not trained
 # chunk: interval of data size to capture
 # labelsToRun: labels of captured data. If the param is empty, labels are randomly generated.
-def run(testRun = False, chunk = 10, labelsToRun = [], epochsToTrain = None, data_file_path='/Users/rica/Documents/data_v3.csv'):
-	writer, file = create_file_writer(data_file_path)
-	data_file_for_all_path = None 
-	if testRun == True :
-		data_file_for_all_path = '/Users/rica/Documents/data_for_test.csv'
-	else :
-		data_file_for_all_path = '/Users/rica/Documents/data_for_all.csv'
-	writerForFileForAll, fileForAll = create_file_writer(data_file_for_all_path, mode='a')
+def run(testRun = False, chunk = 10, labelsToRun = [], epochs = None, model_path = None, data_file_path='/Users/rica/Documents/data_v3.csv'):
+	writer, file = create_file_writer(data_file_path, mode='a')
 	#Text Config
 	rgb = (255, 0, 0)
 	font = cv2.FONT_HERSHEY_SIMPLEX
@@ -131,10 +125,9 @@ def run(testRun = False, chunk = 10, labelsToRun = [], epochsToTrain = None, dat
 			#result = pose.process(frame_rgb)
 			if result.pose_landmarks is not None:
 				#mp_drawing.draw_landmarks(frame_rgb, result.pose_landmarks, mp_pose.POSE_CONNECTIONS)
-				csv_data = write_landmarks_to_csv(result.pose_landmarks.landmark, label)
+				csv_data = write_landmarks_to_csv(result.pose_world_landmarks.landmark, label)
 				#csv_data.append(label)
 				writer.writerow(csv_data) # Write a csv file
-				writerForFileForAll.writerow(csv_data)
 				actualFeatures.append(csv_data.copy().pop())
 				actualLabels.append(label)
 				total_data_count+=1
@@ -146,15 +139,7 @@ def run(testRun = False, chunk = 10, labelsToRun = [], epochsToTrain = None, dat
 			cv2.putText(frame_rgb, f"{count}:{labels[label]}", (50, 800), font, 10.0, rgb, 50)
 	# Release open resources
 	file.close()
-	fileForAll.close()
 	video.release()
 	cv2.destroyAllWindows()
-	model_path = 'tf/models/boxing_pose_est_v3_0.keras'
-	model = None
-	if testRun == False:
-		epochs = epochsToTrain
-		if epochs is None:
-			epochs = total_data_count * 20
+	if testRun == False and epochs is not None:
 		t.train(data_file_path, model_path, epochs)
-		#model= t.train(data_file_path, model_path, epochs)
-	t.loadFileAndTest(data_file_for_all_path, model_path)
