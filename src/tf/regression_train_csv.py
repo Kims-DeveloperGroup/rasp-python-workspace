@@ -128,12 +128,12 @@ def _train(
 				batch_size = batch_size,
 				callbacks= [
 					TrainCallback(),
-					#callbacks.EarlyStopping(
-					#	monitor='val_categorical_accuracy',
-					#	patience=5,
-					#	restore_best_weights = True,
-					#	start_from_epoch = 1,
-					#),
+					callbacks.EarlyStopping(
+						monitor='val_categorical_accuracy',
+						patience=1,
+						restore_best_weights = True,
+						start_from_epoch = 350,
+					),
 				],
 			)
 	return model
