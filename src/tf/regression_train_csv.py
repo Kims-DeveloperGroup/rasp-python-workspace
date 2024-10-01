@@ -70,7 +70,7 @@ class TrainCallback(tf.keras.callbacks.Callback):
 		self.loss.append(train_data_loss)
 		self.val_loss.append(val_loss)
 		self.val_acc.append(val_acc)
-		if(val_acc >0.80) or (train_data_acc >= 0.90):
+		if(val_acc >= 0.90) and (train_data_acc > 0.80):
 			self.model.stop_training = True
 	
 	def on_train_end(self, logs=None):
@@ -129,10 +129,12 @@ def _train(
 				callbacks= [
 					TrainCallback(),
 					callbacks.EarlyStopping(
-						monitor='val_categorical_accuracy',
-						patience=1,
+						#monitor='val_categorical_accuracy',
+						monitor='val_loss',
+						patience=100,
 						restore_best_weights = True,
 						start_from_epoch = 350,
+						verbose = 1,
 					),
 				],
 			)
