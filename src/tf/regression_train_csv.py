@@ -70,7 +70,7 @@ class TrainCallback(tf.keras.callbacks.Callback):
 		self.loss.append(train_data_loss)
 		self.val_loss.append(val_loss)
 		self.val_acc.append(val_acc)
-		if(val_acc >0.90) or (train_data_acc > 90.0):
+		if(val_acc >0.80) or (train_data_acc >= 0.90):
 			self.model.stop_training = True
 	
 	def on_train_end(self, logs=None):
