@@ -102,7 +102,7 @@ def _train(
 	
 	features_copy = features_copy.take(active_landmark_indices, axis=1)
 	test_features = test_features.take(active_landmark_indices, axis=1)
-	normalizer = layers.Normalization(axis=-1)
+	normalizer = layers.Normalization(axis=None)
 	normalizer.adapt(features_copy)
 
 	# Make regression model
