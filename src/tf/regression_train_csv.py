@@ -70,8 +70,8 @@ class TrainCallback(tf.keras.callbacks.Callback):
 		self.loss.append(train_data_loss)
 		self.val_loss.append(val_loss)
 		self.val_acc.append(val_acc)
-		if(val_acc >= 0.90) and (train_data_acc > 0.80):
-			self.model.stop_training = True
+		#if(val_acc >= 0.90) and (train_data_acc > 0.80):
+			#self.model.stop_training = True
 	
 	def on_train_end(self, logs=None):
 		print('훈련 끝')
@@ -110,7 +110,7 @@ def _train(
 		model = tf.keras.Sequential([
 	  	normalizer,
 	  	layers.Flatten(),
-	  	layers.Dense(10, activation='relu', kernel_regularizer = regularizers.L2(regular_rate)),
+	  	layers.Dense(20, activation='relu', kernel_regularizer = regularizers.L2(regular_rate)),
 		layers.Dropout(rate = dropout_rate),
 	  	layers.Dense(10, activation='softmax'),
 		])
@@ -131,7 +131,7 @@ def _train(
 					callbacks.EarlyStopping(
 						#monitor='val_categorical_accuracy',
 						monitor='val_loss',
-						patience=100,
+						patience=200,
 						restore_best_weights = True,
 						start_from_epoch = 350,
 						verbose = 1,
