@@ -6,12 +6,13 @@ import numpy as np
 import mediapipe as mp
 import csv
 import time
+import os
 # 0; Jab, 1: Straigt, 
 # 2: Front Hand Hook, 3: Back Hand Hook, 
 # 4: Front Hand Upper Cut, 5: Back Hand Upper Cut
 # 6: Front Hand Body Shot, 7: Back Hand Body Shot
 # 8: Body Jab 9: Body Straigh
-labels = ['Jab', 'Straight', 'FR-Hook', 'BH-Hook', 'FR-Upper', 'BH-Upper', 'FR-Body', 'BH-Body', 'BodyJab', 'BodyStraight']
+labels = ['Jab', 'Straight', 'FR Hook', 'BH Hook', 'FR Upper', 'BH Upper', 'FR Body', 'BH Body', 'Body Jab', 'Body Straight']
 
 # Initialize MediaPipe Pose and Drawing utilities
 mp_pose = mp.solutions.pose
@@ -115,6 +116,7 @@ def run(testRun = False, chunk = 10, labelsToRun = [], epochs = None, model_path
 		elif started == True and label == -1 and timer == 0: 
 			if labelsToRun:
 				label = labelsToRun[count % len(labelsToRun)]
+				os.system(f'say "{labels[label]}"')
 			else:
 				label = random_label()
 			labelText = labels[label]
@@ -122,8 +124,8 @@ def run(testRun = False, chunk = 10, labelsToRun = [], epochs = None, model_path
 			timer = getTime()
 		elif label != -1 and timer != 0 and (getTime() - timer) > capture_duration:
 			# Get csv data from a frame
-			#result = pose.process(frame_rgb)
 			if result.pose_landmarks is not None:
+				os.system('say "Chaal cock"')
 				#mp_drawing.draw_landmarks(frame_rgb, result.pose_landmarks, mp_pose.POSE_CONNECTIONS)
 				csv_data = write_landmarks_to_csv(result.pose_world_landmarks.landmark, label)
 				#csv_data.append(label)
