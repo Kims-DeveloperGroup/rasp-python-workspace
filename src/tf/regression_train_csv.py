@@ -110,7 +110,9 @@ def _train(
 		model = tf.keras.Sequential([
 	  	normalizer,
 	  	layers.Flatten(),
-	  	layers.Dense(20, activation='relu', kernel_regularizer = regularizers.L2(regular_rate)),
+	  	layers.Dense(60, activation='relu', kernel_regularizer = regularizers.L2(regular_rate)),
+		layers.Dropout(rate = dropout_rate),
+	  	layers.Dense(30, activation='relu', kernel_regularizer = regularizers.L2(regular_rate)),
 		layers.Dropout(rate = dropout_rate),
 	  	layers.Dense(10, activation='softmax'),
 		])
