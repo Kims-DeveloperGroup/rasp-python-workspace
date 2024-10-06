@@ -110,6 +110,7 @@ def run(testRun = False, chunk = 10, labelsToRun = [], epochs = None, model_path
 		# At dvery 10 dataset, decide to continue or not
 		elif count > 0 and (count % chunkSize) == 0 and started == True : 
 			cv2.putText(frame_rgb, 'CONTINUE OR NOT', (50, 500), font, 5.0, rgb, 10)
+			os.system(f'say "Contiune or not."')
 			if key == ord(' '): # Contiune and ready
 				started = False
 		# Lable frames and write in a csv file
